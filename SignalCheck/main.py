@@ -4,12 +4,11 @@ import re
 import wmi
 from threading import Thread
 import thread
-#import pythoncom
 import wx
 from Exscript import Account
 from Exscript.protocols import SSH2
 import ping
-from ping import Ping
+
 
 
 
