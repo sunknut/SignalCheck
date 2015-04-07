@@ -7,7 +7,7 @@ import thread
 import wx
 from Exscript import Account
 from Exscript.protocols import SSH2
-import ping
+from ping import Ping
 
 
 
@@ -15,7 +15,7 @@ import ping
 class Router():
     __conn = SSH2()
     
-    def __init__(self,ip,username='localadmin',password='cisco',enablepassword='pdbj4u\n',):
+    def __init__(self,ip,username='admin',password='admin',enablepassword='admin',):
         self.ip = ip
         self.username = username
         self.password = password
@@ -118,6 +118,7 @@ class MyFrame1(wx.Frame):
         wx.Frame.__init__(self, None, title= u'3G信号检测工具',size=(500,500))
         
         self.thread=None
+        self.p = None
         
         panel = wx.Panel(self)
         self.left = wx.BoxSizer(wx.VERTICAL)
@@ -126,6 +127,7 @@ class MyFrame1(wx.Frame):
         self.startBtn = wx.Button(panel, -1, u"开始")
         self.stopBtn = wx.Button(panel, -1, u"停止")
         self.pingBtn = wx.Button(panel,-1,u"Ping生产服务器")
+        self.stopPingBtn = wx.Button(panel,-1,u"停止Ping生产服务器")
         
         self.log = wx.TextCtrl(panel,-1,"",style=wx.TE_RICH|wx.TE_MULTILINE)
         
@@ -139,22 +141,24 @@ class MyFrame1(wx.Frame):
         self.tc1 = wx.StaticText(panel, -1, u"电信3G信号强度:        ")
         self.tc2 = wx.StaticText(panel, -1, u"联通3G信号强度:        ")
         
+        self.tc3 = wx.StaticText(panel, -1, u"与服务器通信平均延迟")
+        
         self.menu = wx.BoxSizer(wx.VERTICAL)
         self.menu.Add(self.startBtn,0,wx.RIGHT,15)
         self.menu.Add(self.stopBtn,0,wx.RIGHT,15)
-        self.menu.Add(self.pingBtn,0,wx.RIGHT,15)
+        self.right.Add(self.pingBtn,0,wx.RIGHT,15)
+        self.right.Add(self.stopPingBtn,0,wx.RIGHT,15)
+        self.right.Add(self.tc3,0,wx.RIGHT,15)
         
         self.left.Add(self.tc1,0,wx.LEFT,15)
         self.left.Add(self.signal1,0,wx.LEFT,15)
-        
-        
-        self.right.Add(self.tc2,0,wx.LEFT,15)
-        self.right.Add(self.signal2,0,wx.LEFT,15)
+        self.left.Add(self.tc2,0,wx.LEFT,15)
+        self.left.Add(self.signal2,0,wx.LEFT,15)
         
         self.top = wx.BoxSizer(wx.HORIZONTAL)
-        self.top.Add(self.menu,1,wx.ALL|wx.EXPAND, 5)
-        self.top.Add(self.left,1,wx.ALL|wx.EXPAND, 5)
-        self.top.Add(self.right,1,wx.ALL|wx.EXPAND, 5)
+        self.top.Add(self.menu,0,wx.LEFT|wx.EXPAND, 5)
+        self.top.Add(self.left,0,wx.LEFT|wx.EXPAND, 5)
+        self.top.Add(self.right,0,wx.LEFT|wx.EXPAND, 5)
         
         self.main = wx.BoxSizer(wx.VERTICAL)
         self.main.Add(self.top,0,wx.ALL|wx.EXPAND,5)
@@ -165,6 +169,7 @@ class MyFrame1(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnStartBtn,self.startBtn)
         self.Bind(wx.EVT_BUTTON, self.OnStopBtn,self.stopBtn)
         self.Bind(wx.EVT_BUTTON, self.pingServer, self.pingBtn)
+        self.Bind(wx.EVT_BUTTON, self.stopPingServer, self.stopPingBtn)
     
     def OnCloseWindow(self, evt):
         self.Destroy()
@@ -202,13 +207,19 @@ class MyFrame1(wx.Frame):
     def sendMessage(self, msg):
         self.log.AppendText(msg+"\n")
     
+    def verbose_ping(self,hostname, timeout=1000, count=3, packet_size=55):
+        self.p = Ping(hostname, timeout, packet_size,windows=self)
+        self.p.run(count)
+    
     def pingServer(self,evt):
-        thread.start_new(ping.verbose_ping, ("192.168.1.1", 4000, 4, 32,self))
+        thread.start_new(self.verbose_ping, ("192.168.1.1", 4000,500,32))
     
-    def abc(self):
-        print 'a'
+    def stopPingServer(self,evt):
+        self.p.stopRun()
     
-
+    def showPing(self,msg):
+        self.tc3.SetLabelText(u"与服务器通信平均延迟%0.3fms"%(msg))
+    
 if __name__=="__main__":
     app = wx.PySimpleApp()
     frame = MyFrame1()

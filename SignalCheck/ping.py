@@ -90,6 +90,7 @@ class Ping(object):
         self.timeout = timeout
         self.packet_size = packet_size
         self.windows = windows
+        self.runFlag = True
         if own_id is None:
             self.own_id = os.getpid() & 0xFFFF
         else:
@@ -180,13 +181,19 @@ class Ping(object):
 
 
     #--------------------------------------------------------------------------
-
+    def stopRun(self):
+        self.runFlag = False
+    def showAvgTime(self):
+        if self.receive_count > 0:
+            msg = self.total_time / self.receive_count
+            self.windows.showPing(msg)
+       
     def run(self, count=None, deadline=None):
         """
         send and receive pings in a loop. Stop if count or until deadline.
         """
-
-        while True:
+        #print count
+        while self.runFlag:
             delay = self.do()
 
             self.seq_number += 1
@@ -201,9 +208,10 @@ class Ping(object):
             # Pause for the remainder of the MAX_SLEEP period (if applicable)
             if (MAX_SLEEP > delay):
                 time.sleep((MAX_SLEEP - delay) / 1000.0)
-
+            self.showAvgTime()
         self.print_exit()
-
+        
+        
     def do(self):
         """
         Send one ICMP ECHO_REQUEST and receive the response until self.timeout
