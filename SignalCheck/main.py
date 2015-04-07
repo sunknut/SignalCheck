@@ -204,7 +204,10 @@ class MyFrame1(wx.Frame):
     
     def pingServer(self,evt):
         thread.start_new(ping.verbose_ping, ("192.168.1.1", 4000, 4, 32,self))
-
+    
+    def abc(self):
+        print 'a'
+    
 
 if __name__=="__main__":
     app = wx.PySimpleApp()
